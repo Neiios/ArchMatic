@@ -103,7 +103,6 @@ title Arch Linux
 linux /vmlinuz-linux  
 initrd  /initramfs-linux.img  
 options root=${DISK}1 rw
-EOF
 
 echo "--------------------------------------"
 echo "--          Network Setup           --"
@@ -123,3 +122,5 @@ umount -R /mnt
 echo "--------------------------------------"
 echo "--   SYSTEM READY FOR FIRST BOOT    --"
 echo "--------------------------------------"
+
+EOF
