@@ -29,8 +29,8 @@ sgdisk -t 5:ef00 /dev/sda
 sgdisk -t 6:8300 /dev/sda
 
 # label partitions
-sgdisk -c 5:"UEFISYS" ${DISK}
-sgdisk -c 6:"ROOT" ${DISK}
+sgdisk -c 5:"UEFISYS" /dev/sda
+sgdisk -c 6:"ROOT" /dev/sda
 
 # make filesystems
 echo -e "\nCreating Filesystems...\n$HR"
