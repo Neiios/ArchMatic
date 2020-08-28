@@ -13,56 +13,42 @@ echo "-------------------------------------------------"
 timedatectl set-ntp true
 pacman -S --noconfirm pacman-contrib
 mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
-curl -s "https://www.archlinux.org/mirrorlist/?country=US&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
+curl -s "https://www.archlinux.org/mirrorlist/?country=LT&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
 
 
 
 echo -e "\nInstalling prereqs...\n$HR"
 pacman -S --noconfirm gptfdisk btrfs-progs
 
-echo "-------------------------------------------------"
-echo "-------select your disk to format----------------"
-echo "-------------------------------------------------"
-lsblk
-echo "Please enter disk: (example /dev/sda)"
-read DISK
-echo "--------------------------------------"
-echo -e "\nFormatting disk...\n$HR"
-echo "--------------------------------------"
-
-# disk prep
-sgdisk -Z ${DISK} # zap all on disk
-sgdisk -a 2048 -o ${DISK} # new gpt disk 2048 alignment
-
 # create partitions
-sgdisk -n 1:0:+1000M ${DISK} # partition 1 (UEFI SYS), default start block, 512MB
-sgdisk -n 2:0:0     ${DISK} # partition 2 (Root), default start, remaining
+sgdisk -n 5:0:+1000M /dev/sda # partition 1 (UEFI SYS), default start block, 512MB
+sgdisk -n 6:0:0     /dev/sda # partition 2 (Root), default start, remaining
 
 # set partition types
-sgdisk -t 1:ef00 ${DISK}
-sgdisk -t 2:8300 ${DISK}
+sgdisk -t 5:ef00 /dev/sda
+sgdisk -t 6:8300 /dev/sda
 
 # label partitions
-sgdisk -c 1:"UEFISYS" ${DISK}
-sgdisk -c 2:"ROOT" ${DISK}
+sgdisk -c 5:"UEFISYS" ${DISK}
+sgdisk -c 6:"ROOT" ${DISK}
 
 # make filesystems
 echo -e "\nCreating Filesystems...\n$HR"
 
-mkfs.vfat -F32 -n "UEFISYS" "${DISK}1"
-mkfs.ext4 -L "ROOT" "${DISK}2"
+mkfs.vfat -F32 -n "UEFISYS" /dev/sda5
+mkfs.ext4 -L "ROOT" /dev/sda6
 
 # mount target
 mkdir /mnt
-mount -t ext4 "${DISK}2" /mnt
+mount -t ext4 /dev/sda6 /mnt
 mkdir /mnt/boot
 mkdir /mnt/boot/efi
-mount -t vfat "${DISK}1" /mnt/boot/
+mount -t vfat /dev/sda5 /mnt/boot/
 
 echo "--------------------------------------"
 echo "-- Arch Install on Main Drive       --"
 echo "--------------------------------------"
-pacstrap /mnt base base-devel linux linux-firmware vim nano sudo --noconfirm --needed
+pacstrap /mnt base base-devel linux linux-firmware vim --noconfirm --needed
 genfstab -U /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
 
@@ -74,7 +60,7 @@ cat <<EOF > /boot/loader/entries/arch.conf
 title Arch Linux  
 linux /vmlinuz-linux  
 initrd  /initramfs-linux.img  
-options root=${DISK}1 rw
+options root=/dev/sda5 rw
 EOF
 
 echo "--------------------------------------"
